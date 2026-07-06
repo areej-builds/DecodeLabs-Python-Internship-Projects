@@ -22,15 +22,15 @@ def view_tasks(my_tasks):
         print("\nYour task list is empty!")
         return
         
-    print("\n" + "="*40)
-    print(" ID | STATUS   | TASK TITLE")
-    print("="*40)
+    print("\n" + "="*45)
+    print(" ID | STATUS    | TASK TITLE")
+    print("="*45)
     
     for task in my_tasks:
-        print(f" {task['id']:<2} | {task['status']:<8} | {task['title']}")
+        print(f" {task['id']:<2} | {task['status']:<9} | {task['title']}")
     
-    print("="*40 + "\n")
-
+    print("="*45 + "\n")
+    
 def complete_task(my_tasks, task_id):
     # Searching for the task by its ID and updating status
     for task in my_tasks:
