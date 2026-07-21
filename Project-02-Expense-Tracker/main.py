@@ -1,65 +1,147 @@
+import customtkinter as ctk
+from tkinter import messagebox
+
+ctk.set_appearance_mode("dark")       # "dark", "light", or "system"
+ctk.set_default_color_theme("green")  # "blue", "green", "dark-blue"
+
+
 def add_expense(new_expense: float, total_spent: float) -> float:
-    """
-    Function to add the new expense to the total tracker.
-    """
-    # Dynamic calculation unit that handles data accumulation
-    total_spent = total_spent + new_expense
-    print("\n[SUCCESS] Expense added successfully!")
-    return total_spent
+    """Add the new expense to the running total (pure calculation, no I/O)."""
+    return total_spent + new_expense
+
+
+class ExpenseTrackerApp(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+
+        self.title("Expense Tracker")
+        self.geometry("440x600")
+        self.resizable(False, False)
+
+        self.total_spent = 0.0
+        self.expenses = []  # history of (description, amount)
+
+        self._build_ui()
+
+    def _build_ui(self):
+        # --- Title ---
+        title = ctk.CTkLabel(
+            self, text="💰 Expense Tracker", font=ctk.CTkFont(size=24, weight="bold")
+        )
+        title.pack(pady=(25, 5))
+
+        # --- Total card ---
+        self.total_card = ctk.CTkFrame(self, corner_radius=15)
+        self.total_card.pack(pady=15, padx=25, fill="x")
+
+        ctk.CTkLabel(
+            self.total_card, text="Total Spent", font=ctk.CTkFont(size=13),
+            text_color="gray"
+        ).pack(pady=(15, 0))
+
+        self.total_label = ctk.CTkLabel(
+            self.total_card, text="$0.00", font=ctk.CTkFont(size=32, weight="bold")
+        )
+        self.total_label.pack(pady=(0, 15))
+
+        # --- Input form card ---
+        form_card = ctk.CTkFrame(self, corner_radius=15)
+        form_card.pack(pady=10, padx=25, fill="x")
+
+        self.desc_entry = ctk.CTkEntry(
+            form_card, placeholder_text="Description (e.g. Groceries)", height=40
+        )
+        self.desc_entry.pack(pady=(15, 8), padx=15, fill="x")
+
+        self.amount_entry = ctk.CTkEntry(
+            form_card, placeholder_text="Amount ($)", height=40
+        )
+        self.amount_entry.pack(pady=(0, 15), padx=15, fill="x")
+        self.amount_entry.bind("<Return>", lambda event: self.handle_add_expense())
+
+        add_btn = ctk.CTkButton(
+            form_card, text="➕ Add Expense", height=40,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            command=self.handle_add_expense
+        )
+        add_btn.pack(pady=(0, 15), padx=15, fill="x")
+
+        # --- History section ---
+        history_label = ctk.CTkLabel(
+            self, text="Expense History", font=ctk.CTkFont(size=15, weight="bold")
+        )
+        history_label.pack(pady=(15, 5), anchor="w", padx=25)
+
+        self.history_frame = ctk.CTkScrollableFrame(self, height=180, corner_radius=15)
+        self.history_frame.pack(pady=5, padx=25, fill="both", expand=True)
+
+        self.empty_label = ctk.CTkLabel(
+            self.history_frame, text="No expenses yet", text_color="gray"
+        )
+        self.empty_label.pack(pady=20)
+
+        # --- Reset button ---
+        reset_btn = ctk.CTkButton(
+            self, text="Reset All", height=35, fg_color="#B33636", hover_color="#8f2b2b",
+            command=self.handle_reset
+        )
+        reset_btn.pack(pady=15)
+
+    def handle_add_expense(self):
+        amount_text = self.amount_entry.get().strip()
+        description = self.desc_entry.get().strip() or "Unnamed expense"
+
+        try:
+            new_expense = float(amount_text)
+        except ValueError:
+            messagebox.showerror("Invalid Input", "Please enter a valid number for the amount.")
+            return
+
+        if new_expense < 0:
+            messagebox.showwarning("Invalid Amount", "Expense amount cannot be negative!")
+            return
+
+        self.total_spent = add_expense(new_expense, self.total_spent)
+        self.expenses.append((description, new_expense))
+
+        if self.empty_label.winfo_exists():
+            self.empty_label.destroy()
+
+        row = ctk.CTkFrame(self.history_frame, fg_color="transparent")
+        row.pack(fill="x", pady=4)
+
+        ctk.CTkLabel(row, text=description, anchor="w").pack(side="left", padx=(5, 0))
+        ctk.CTkLabel(
+            row, text=f"${new_expense:.2f}", font=ctk.CTkFont(weight="bold")
+        ).pack(side="right", padx=(0, 5))
+
+        self.total_label.configure(text=f"${self.total_spent:.2f}")
+
+        self.desc_entry.delete(0, "end")
+        self.amount_entry.delete(0, "end")
+        self.desc_entry.focus()
+
+    def handle_reset(self):
+        confirm = messagebox.askyesno("Reset", "Clear all expenses and reset total to zero?")
+        if confirm:
+            self.total_spent = 0.0
+            self.expenses.clear()
+
+            for widget in self.history_frame.winfo_children():
+                widget.destroy()
+
+            self.empty_label = ctk.CTkLabel(
+                self.history_frame, text="No expenses yet", text_color="gray"
+            )
+            self.empty_label.pack(pady=20)
+
+            self.total_label.configure(text="$0.00")
+
 
 def main():
-    # Application state memory initialization to track calculations
-    total_spent = 0.0
+    app = ExpenseTrackerApp()
+    app.mainloop()
 
-    print("\n" + "=" * 35)
-    print("     WELCOME TO EXPENSE TRACKER!     ")
-    print("=" * 35)
-
-    # Continuous operational loop for processing menu actions
-    while True:
-        print("\n--- Main Menu ---")
-        print("1. Add New Expense")
-        print("2. View Total Expenses")
-        print("3. Exit Program")
-        print("-" * 18)
-
-        choice = None  
-        
-        try:
-            # Capturing and validating the numerical action input
-            choice = int(input("Enter your choice (1-3): "))
-        except ValueError:
-            print("\n[ERROR] Invalid input! Please enter a number (1, 2, or 3).")
-            continue
-
-        # Processing system operations based on user selection
-        if choice == 1:
-            try:
-                new_expense = float(input("\nEnter expense amount: "))
-                
-                # Input validation barrier to reject negative data entries
-                if new_expense < 0:
-                    print("[WARNING] Expense amount cannot be negative!")
-                else:
-                    total_spent = add_expense(new_expense, total_spent)
-            except ValueError:
-                print("\n[ERROR] Invalid data! Please enter a valid number for amount.")
-
-        elif choice == 2:
-            print(f"\n[STATUS] Current Total Expense: ${total_spent:.2f}")
-
-        elif choice == 3:
-            # Kill-switch activation: Graceful shutdown and final state logging
-            print("\n" + "=" * 35)
-            print("          FINAL REPORT             ")
-            print(f"  Total Amount Spent: ${total_spent:.2f}")
-            print("=" * 35)
-            print("Thank you for using Expense Tracker. Goodbye!")
-            break
-
-        else:
-            print("\n[ERROR] Invalid option! Please choose between 1 and 3.")
 
 if __name__ == "__main__":
     main()
- 
