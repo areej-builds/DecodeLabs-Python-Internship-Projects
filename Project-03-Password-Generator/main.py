@@ -254,7 +254,7 @@ class PasswordGeneratorApp(ctk.CTk):
 
         toast.after(1600, toast.destroy)
 
-
+ 
 def main():
     app = PasswordGeneratorApp()
     app.mainloop()
