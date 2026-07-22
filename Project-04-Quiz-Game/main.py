@@ -2,7 +2,7 @@ import customtkinter as ctk
 import random
 import json
 import os
-
+ 
  
 class ModernQuizApp(ctk.CTk):
     def __init__(self):
